@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Prontuário Eletrônico</title>
+
+<style>
+body {
+    font-family: Arial;
+    margin: 20px;
+    background: #f4f6f8;
+}
+
+h2 {
+    background: #4CAF50;
+    color: white;
+    padding: 10px;
+}
+
+.section {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0 10px;
+}
+
+button {
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.alert {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+.red { background: #ffcccc; }
+.yellow { background: #fff3cd; }
+.green { background: #d4edda; }
+
+</style>
+</head>
+
+<body>
+
+<h1>🩺 Prontuário Eletrônico</h1>
+
+<div class="section">
+<h2>Identificação</h2>
+<input id="nome" placeholder="Nome social">
+<input id="idade" type="number" placeholder="Idade">
+<select id="genero">
+<option>Selecionar</option>
+<option>Mulher trans</option>
+<option>Homem trans</option>
+<option>Não-binário</option>
+</select>
+</div>
+
+<div class="section">
+<h2>Histórico Clínico</h2>
+<label>Uso de hormônio:</label>
+<select id="hormonio">
+<option>Selecionar</option>
+<option>Não</option>
+<option>Sim</option>
+</select>
+
+<label>Hipertensão:</label>
+<select id="hipertensao">
+<option>Selecionar</option>
+<option>Não</option>
+<option>Sim</option>
+</select>
+</div>
+
+<div class="section">
+<h2>Avaliação Mental</h2>
+<label>Humor (0–10):</label>
+<input id="humor" type="number" min="0" max="10">
+
+<label>Ideação suicida:</label>
+<select id="suicidio">
+<option>Selecionar</option>
+<option>Não</option>
+<option>Sim</option>
+</select>
+</div>
+
+<div class="section">
+<h2>Exame Físico</h2>
+<input id="peso" type="number" placeholder="Peso (kg)">
+<input id="altura" type="number" placeholder="Altura (m)">
+<p><b>IMC:</b> <span id="imc">-</span></p>
+</div>
+
+<div class="section">
+<h2>Alertas</h2>
+<div id="alertas"></div>
+</div>
+
+<button onclick="salvar()">💾 Salvar</button>
+
+<script>
+
+// Calcular IMC automaticamente
+document.getElementById("peso").addEventListener("input", calcularIMC);
+document.getElementById("altura").addEventListener("input", calcularIMC);
+
+function calcularIMC() {
+    let peso = parseFloat(document.getElementById("peso").value);
+    let altura = parseFloat(document.getElementById("altura").value);
+
+    if (peso && altura) {
+        let imc = (peso / (altura * altura)).toFixed(2);
+        document.getElementById("imc").innerText = imc;
+    }
+}
+
+// Gerar alertas
+function gerarAlertas() {
+    let alertas = "";
+
+    let hormonio = document.getElementById("hormonio").value;
+    let hipertensao = document.getElementById("hipertensao").value;
+    let suicidio = document.getElementById("suicidio").value;
+
+    let peso = parseFloat(document.getElementById("peso").value);
+    let altura = parseFloat(document.getElementById("altura").value);
+
+    // ⚖️ Cálculo IMC
+    let imc = null;
+    if (peso && altura) {
+        imc = peso / (altura * altura);
+    }
+
+    // ⚠️ Ideação suicida (CRÍTICO)
+    if (suicidio === "Sim") {
+        alertas += `<div class="alert red">⚠️ Alerta crítico: ideação suicida</div>`;
+    }
+
+    // ⚠️ Uso de hormônio
+    if (hormonio === "Sim") {
+        alertas += `<div class="alert yellow">⚠️ Uso de hormônio: necessário acompanhamento e orientação</div>`;
+    }
+
+    // ⚠️ Hipertensão
+    if (hipertensao === "Sim") {
+        alertas += `<div class="alert yellow">⚠️ Hipertensão: monitoramento necessário</div>`;
+    }
+
+    // ⚠️ Classificação IMC
+    if (imc !== null) {
+
+        if (imc < 18.5) {
+            alertas += `<div class="alert yellow">⚠️ Baixo peso (possível desnutrição)</div>`;
+        } 
+        else if (imc >= 25 && imc < 30) {
+            alertas += `<div class="alert yellow">⚠️ Sobrepeso</div>`;
+        } 
+        else if (imc >= 30 && imc < 35) {
+            alertas += `<div class="alert red">⚠️ Obesidade Grau I</div>`;
+        } 
+        else if (imc >= 35 && imc < 40) {
+            alertas += `<div class="alert red">⚠️ Obesidade Grau II</div>`;
+        } 
+        else if (imc >= 40) {
+            alertas += `<div class="alert red">⚠️ Obesidade Grau III (grave)</div>`;
+        }
+    }
+
+    // ✅ Caso não haja alertas
+    if (alertas === "") {
+        alertas = `<div class="alert green">Nenhum alerta identificado</div>`;
+    }
+
+    document.getElementById("alertas").innerHTML = alertas;
+}
+
+// Salvar no navegador
+function salvar() {
+    let dados = {
+        nome: nome.value,
+        idade: idade.value,
+        genero: genero.value,
+        humor: humor.value
+    };
+
+    localStorage.setItem("prontuario", JSON.stringify(dados));
+
+    gerarAlertas();
+    alert("Salvo com sucesso!");
+}
+
+// Carregar dados ao abrir
+window.onload = function() {
+    let dados = JSON.parse(localStorage.getItem("prontuario"));
+
+    if (dados) {
+        nome.value = dados.nome;
+        idade.value = dados.idade;
+        genero.value = dados.genero;
+        humor.value = dados.humor;
+    }
+
+    gerarAlertas();
+}
+
+</script>
+
+</body>
+</html>
